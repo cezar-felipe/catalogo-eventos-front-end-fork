@@ -7,8 +7,8 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { createCidadeApi, createEventoApi, deleteCidadeApi, deleteEventoApi, fetchAppState, updateCidadeApi, updateEventoApi } from "../bff/appBff";
 import type { Cidade, Evento, PontoTuristico } from "../domain";
-import { fetchAppState, createEventoApi, updateEventoApi, deleteEventoApi } from "../bff/appBff";
 
 
 export interface AppState {
@@ -81,10 +81,7 @@ function loadFromStorage(): AppState | null {
 export const AppDataProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
-  const [state, setState] = useState<AppState>(() => {
-    if (typeof window === "undefined") return emptyState;
-    return loadFromStorage() ?? emptyState;
-  });
+  const [state, setState] = useState<AppState>(emptyState);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,9 +102,6 @@ export const AppDataProvider: React.FC<React.PropsWithChildren> = ({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const hasLocal = loadFromStorage();
-    if (hasLocal) return;
-
     setLoading(true);
     fetchAppState()
       .then((data: AppState) => setState(data))
@@ -120,7 +114,7 @@ export const AppDataProvider: React.FC<React.PropsWithChildren> = ({
 
   // ====== CRUD Eventos (igual antes, só usando setState) ======
 
-    // ====== CRUD Eventos (agora via fake API) ======
+  // ====== CRUD Eventos (agora via fake API) ======
 
   const createOrUpdateEvento: AppDataContextValue["createOrUpdateEvento"] =
     useCallback(async (eventoInput) => {
@@ -189,32 +183,47 @@ export const AppDataProvider: React.FC<React.PropsWithChildren> = ({
   // ====== CRUD Cidades ======
 
   const createOrUpdateCidade: AppDataContextValue["createOrUpdateCidade"] =
-    useCallback((cidade) => {
-      setState((prev) => {
-        const id = cidade.id ?? createId();
-        const existente = prev.cidades.find((c) => c.id === id);
-        const nova: Cidade = {
-          id,
-          nome: cidade.nome,
-          uf: cidade.uf || "MS",
-          desc: cidade.desc ?? "",
-          pontos: existente?.pontos ?? [],
-        };
+    useCallback(async (cidade) => {
+      setError(null);
+      const isUpdate = !!cidade.id;
+      const id = cidade.id ?? createId();
 
-        const idx = prev.cidades.findIndex((c) => c.id === id);
-        let lista: Cidade[];
-        if (idx >= 0) {
-          lista = [...prev.cidades];
-          lista[idx] = nova;
+      const existente = state.cidades.find((c) => c.id === id);
+      const payload: Cidade = {
+        id,
+        nome: cidade.nome,
+        uf: cidade.uf || "MS",
+        desc: cidade.desc ?? "",
+        pontos: existente?.pontos ?? [],
+      }
+      try {
+        let saved;
+
+        if (isUpdate) {
+          saved = await updateCidadeApi(payload);
         } else {
-          lista = [...prev.cidades, nova];
+          saved = await createCidadeApi(payload);
         }
-        return { ...prev, cidades: lista };
-      });
+        setState((prev) => {
+          const cidades = [...prev.cidades];
+          const idx = prev.cidades.findIndex((c) => c.id === id);
+          if (idx >= 0) {
+            cidades[idx] = saved;
+          } else {
+            cidades.push(saved);
+          }
+
+          return { ...prev, cidades };
+        });
+      } catch (err) {
+        console.error(err);
+        setError("Não foi possível salvar a cidade.");
+      }
     }, []);
 
   const deleteCidade: AppDataContextValue["deleteCidade"] = useCallback(
-    (id) => {
+    async (id) => {
+      await deleteCidadeApi(id)
       setState((prev) => ({
         ...prev,
         cidades: prev.cidades.filter((c) => c.id !== id),
@@ -251,7 +260,8 @@ export const AppDataProvider: React.FC<React.PropsWithChildren> = ({
     }, []);
 
   const deletePonto: AppDataContextValue["deletePonto"] = useCallback(
-    (cidadeId, pontoId) => {
+    async (cidadeId, pontoId) => {
+      
       setState((prev) => {
         const cidades = prev.cidades.map((c) => {
           if (c.id !== cidadeId) return c;
