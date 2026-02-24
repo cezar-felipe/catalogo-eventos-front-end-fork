@@ -1,10 +1,7 @@
 import React from "react";
-import EventosPage from "../pages/EventosPage";
+import { DouradosEventosPage } from "../features/eventos/pages/DouradosEventosPage";
 
 export const AppRoutes: React.FC = () => {
   // se quiser, aqui entraria o BrowserRouter depois
-  // return <DouradosEventosPage />;
-  return (
-    <EventosPage />
-  );
+  return <DouradosEventosPage />;
 };

@@ -1,6 +1,6 @@
 import React from "react";
 import type { Cidade, PontoTuristico } from "../../../domain";
-import { Button, Card } from "../../../shared/ui";
+import { Button, Card, SelectField } from "../../../shared/ui";
 
 interface TourismSectionProps {
   cidades: Cidade[];
@@ -44,8 +44,8 @@ export const TourismSection: React.FC<TourismSectionProps> = ({
           <div className="flex flex-col md:flex-row gap-3 items-stretch">
             <label className="flex-1 text-sm flex flex-col gap-1">
               <span>Cidade</span>
-              <select
-                className="w-full rounded-xl border border-white/20 bg-slate-800 px-3 py-2 text-sm outline-none"
+              <SelectField
+                label="Cidade"
                 value={cidadeSelecionadaId ?? ""}
                 onChange={(e) => onCidadeSelecionadaChange(e.target.value)}
               >
@@ -54,7 +54,7 @@ export const TourismSection: React.FC<TourismSectionProps> = ({
                     {c.nome} - {c.uf}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </label>
             <label className="flex-1 text-sm flex flex-col gap-1">
               <span>Buscar ponto</span>

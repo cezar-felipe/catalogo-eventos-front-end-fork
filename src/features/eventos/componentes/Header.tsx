@@ -10,7 +10,7 @@ export default function Header({
   open,
 }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/80 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-320/80 backdrop-blur">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         <button
           className="flex flex-col gap-[5px] w-7 h-6 lg:hidden"
