@@ -1,6 +1,7 @@
-import React from "react";
-import type { Cidade, PontoTuristico } from "../../../domain";
-import { Button, Card, SelectField, TextField } from "../../../shared/ui";
+import { useMemo, useState } from "react";
+import { useAppData } from "../context/appDataContext";
+import type { Cidade, PontoTuristico } from "../domain";
+import { Button, Card, SelectField, TextField } from "../shared/ui";
 
 interface TourismSectionProps {
   cidades: Cidade[];
@@ -19,20 +20,40 @@ interface TourismSectionProps {
   onIrParaCidades: () => void;
 }
 
-export const TourismSection: React.FC<TourismSectionProps> = ({
-  cidades,
-  cidadeSelecionada,
-  cidadeSelecionadaId,
-  onCidadeSelecionadaChange,
-  buscaPonto,
-  onBuscaPontoChange,
-  pontosFiltrados,
-  onNovoPonto,
-  onEditarCidade,
-  onEditarPonto,
-  onExcluirPonto,
-  onIrParaCidades,
-}) => {
+const TourismPage: React.FC = () => {
+  const {
+    state: { cidades },
+  } = useAppData();
+
+  const [buscaPonto, setBuscaPonto] = useState("");
+  const [pontoEdit, setPontoEdit] = useState<PontoTuristico | null>(null);
+  const [pontoCidadeId, setPontoCidadeId] = useState<string | null>(null);
+  const [cidadeEdit, setCidadeEdit] = useState<Cidade | null>(null);
+
+  const [cidadeSelecionadaId, setCidadeSelecionadaId] = useState<string | null>(
+    () => cidades[0]?.id ?? null,
+  );
+
+  const cidadeSelecionada =
+    cidades.find((c) => c.id === cidadeSelecionadaId) ?? cidades[0];
+
+  const pontosFiltrados = useMemo(() => {
+    if (!cidadeSelecionada) return [];
+    const q = buscaPonto.toLowerCase();
+    return cidadeSelecionada.pontos.filter((p) =>
+      `${p.nome} ${p.tipo}`.toLowerCase().includes(q),
+    );
+  }, [buscaPonto, cidadeSelecionada]);
+
+  const onNovoPonto = () => {
+    if (!cidadeSelecionada) {
+      window.alert("Selecione uma cidade primeiro.");
+      return;
+    }
+    setPontoCidadeId(cidadeSelecionada.id);
+    setPontoEdit({} as PontoTuristico);
+  };
+
   return (
     <section
       aria-label="Pontos turísticos"
@@ -43,9 +64,9 @@ export const TourismSection: React.FC<TourismSectionProps> = ({
         <Card className="p-4">
           <div className="flex flex-col md:flex-row gap-3 items-stretch">
             <SelectField
-              label="Cidade"
               value={cidadeSelecionadaId ?? ""}
-              onChange={(e) => onCidadeSelecionadaChange(e.target.value)}
+              onChange={(e) => setCidadeSelecionadaId(e.target.value)}
+              label={"Cidade"}
             >
               {cidades.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -58,7 +79,7 @@ export const TourismSection: React.FC<TourismSectionProps> = ({
               className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm outline-none"
               placeholder="Ex.: Parque, Museu…"
               value={buscaPonto}
-              onChange={(e) => onBuscaPontoChange(e.target.value)}
+              onChange={(e) => setBuscaPonto(e.target.value)}
             />
           </div>
 
@@ -69,12 +90,12 @@ export const TourismSection: React.FC<TourismSectionProps> = ({
             {cidadeSelecionada && (
               <Button
                 size="sm"
-                onClick={() => onEditarCidade(cidadeSelecionada)}
+                onClick={() => setCidadeEdit(cidadeSelecionada)}
               >
                 Editar cidade atual
               </Button>
             )}
-            <Button size="sm" onClick={onIrParaCidades}>
+            <Button size="sm" onClick={() => {}}>
               Gerenciar cidades
             </Button>
           </div>
@@ -114,14 +135,10 @@ export const TourismSection: React.FC<TourismSectionProps> = ({
                     Horário: {p.horario || "—"}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    <Button size="sm" onClick={() => onEditarPonto(p)}>
+                    <Button size="sm" onClick={() => {}}>
                       Editar
                     </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => onExcluirPonto(p.id)}
-                    >
+                    <Button variant="danger" size="sm" onClick={() => {}}>
                       Excluir
                     </Button>
                   </div>
@@ -152,3 +169,5 @@ export const TourismSection: React.FC<TourismSectionProps> = ({
     </section>
   );
 };
+
+export default TourismPage;

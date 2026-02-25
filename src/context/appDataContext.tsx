@@ -81,10 +81,7 @@ function loadFromStorage(): AppState | null {
 export const AppDataProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
-  const [state, setState] = useState<AppState>(() => {
-    if (typeof window === "undefined") return emptyState;
-    return loadFromStorage() ?? emptyState;
-  });
+  const [state, setState] = useState<AppState>(emptyState);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,8 +102,6 @@ export const AppDataProvider: React.FC<React.PropsWithChildren> = ({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // const hasLocal = loadFromStorage();
-    // if (hasLocal) return;
 
     setLoading(true);
     fetchAppState()
